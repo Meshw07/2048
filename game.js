@@ -50,23 +50,35 @@ class Game2048 {
         });
         document.addEventListener('keydown', (e) => this.handleKey(e));
 
-        let touchStartX, touchStartY;
+        let touchStartX, touchStartY, touchStartTime;
         this.gridContainer.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        });
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
+            }
+        }, { passive: true });
+        this.gridContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
         this.gridContainer.addEventListener('touchend', (e) => {
             if (!touchStartX || !touchStartY) return;
             const dx = e.changedTouches[0].clientX - touchStartX;
             const dy = e.changedTouches[0].clientY - touchStartY;
-            if (Math.max(Math.abs(dx), Math.abs(dy)) > 30) {
+            const elapsed = Date.now() - touchStartTime;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const minSwipe = window.innerWidth < 500 ? 20 : 30;
+            if (distance > minSwipe && elapsed < 1000) {
                 if (Math.abs(dx) > Math.abs(dy)) {
                     this.move(dx > 0 ? 'right' : 'left');
                 } else {
                     this.move(dy > 0 ? 'down' : 'up');
                 }
+                if (navigator.vibrate) navigator.vibrate(10);
             }
-        });
+            touchStartX = null;
+            touchStartY = null;
+        }, { passive: true });
 
         this.newGame();
     }

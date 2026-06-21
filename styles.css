@@ -11,13 +11,21 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    min-height: 100dvh;
     color: #f0e6d3;
+    overscroll-behavior: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
 }
 
 .container {
     max-width: 560px;
     width: 100%;
     padding: 20px;
+    touch-action: manipulation;
 }
 
 header {
@@ -79,12 +87,14 @@ h1 {
     color: white;
     border: none;
     border-radius: 12px;
-    padding: 12px 20px;
+    padding: 14px 24px;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .btn:hover {
@@ -153,6 +163,8 @@ h1 {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    min-height: 52px;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .level-btn:hover:not(:disabled) {
@@ -204,6 +216,7 @@ h1 {
     padding: 10px;
     position: relative;
     margin-bottom: 20px;
+    touch-action: none;
 }
 
 .grid-cell {
@@ -343,13 +356,15 @@ h1 {
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #f9d423;
     border-radius: 10px;
-    padding: 10px 20px;
+    padding: 12px 20px;
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
     width: 100%;
     text-align: left;
     transition: background 0.3s ease;
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .toggle-instructions:hover {
@@ -382,4 +397,18 @@ h1 {
     .score-box span:last-child { font-size: 18px; }
     .controls { flex-direction: column; }
     .level-info { flex-direction: column; gap: 5px; }
+    .grid-container { padding: 6px; border-radius: 10px; }
+    .message { padding: 28px 20px; margin: 0 16px; }
+    .message p { font-size: 22px; }
+    .level-select-modal { padding: 28px 20px; margin: 0 16px; }
+    .level-select-modal h2 { font-size: 26px; }
+    .btn { padding: 16px 24px; }
+}
+
+@media (max-height: 600px) {
+    .container { padding: 10px; }
+    header { margin-bottom: 10px; }
+    .controls { margin-bottom: 8px; }
+    .level-info { margin-bottom: 8px; }
+    .grid-container { margin-bottom: 10px; }
 }
