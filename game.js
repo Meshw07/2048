@@ -14,27 +14,39 @@ class Game2048 {
         this.gridContainer = document.getElementById('grid-container');
         this.scoreEl = document.getElementById('score');
         this.bestScoreEl = document.getElementById('best-score');
-        this.levelSelect = document.getElementById('level-select');
         this.levelText = document.getElementById('level-text');
         this.targetText = document.getElementById('target-text');
         this.messageContainer = document.getElementById('message-container');
         this.messageText = document.getElementById('message-text');
         this.newGameBtn = document.getElementById('new-game-btn');
         this.tryAgainBtn = document.getElementById('try-again-btn');
+        this.levelSelectOverlay = document.getElementById('level-select-overlay');
+        this.levelButtons = document.getElementById('level-buttons');
+        this.levelLockMsg = document.getElementById('level-lock-msg');
+        this.currentLevelBadge = document.getElementById('current-level-badge');
 
         this.bestScoreEl.textContent = this.bestScore;
-        this.updateLevelOptions();
+        this.updateLevelButtons();
 
-        this.newGameBtn.addEventListener('click', () => this.newGame());
+        document.getElementById('toggle-instructions-btn').addEventListener('click', () => {
+            const instr = document.getElementById('instructions');
+            const btn = document.getElementById('toggle-instructions-btn');
+            if (instr.style.display === 'none') {
+                instr.style.display = 'block';
+                btn.textContent = 'How to Play ▴';
+            } else {
+                instr.style.display = 'none';
+                btn.textContent = 'How to Play ▾';
+            }
+        });
+
+        this.newGameBtn.addEventListener('click', () => {
+            this.showLevelSelect();
+        });
         this.tryAgainBtn.addEventListener('click', () => {
             this.messageContainer.style.display = 'none';
             this.isPaused = false;
-            this.newGame();
-        });
-        this.levelSelect.addEventListener('change', (e) => {
-            if (this.suppressSelectChange) return;
-            this.gridSize = parseInt(e.target.value);
-            this.newGame();
+            this.showLevelSelect();
         });
         document.addEventListener('keydown', (e) => this.handleKey(e));
 
@@ -59,24 +71,46 @@ class Game2048 {
         this.newGame();
     }
 
-    updateLevelOptions() {
+    updateLevelButtons() {
+        this.levelButtons.innerHTML = '';
         const allLevels = [
-            { value: 3, label: 'Level 1 (3x3)' },
-            { value: 4, label: 'Level 2 (4x4)' },
-            { value: 5, label: 'Level 3 (5x5)' },
-            { value: 6, label: 'Level 4 (6x6)' },
-            { value: 7, label: 'Level 5 (7x7)' }
+            { size: 3, label: 'Level 1', sub: '3×3' },
+            { size: 4, label: 'Level 2', sub: '4×4' },
+            { size: 5, label: 'Level 3', sub: '5×5' },
+            { size: 6, label: 'Level 4', sub: '6×6' },
+            { size: 7, label: 'Level 5', sub: '7×7' }
         ];
-        this.levelSelect.innerHTML = '';
+        const lockedLevels = allLevels.filter(l => !this.unlockedLevels.includes(l.size));
+        this.levelLockMsg.textContent = lockedLevels.length > 0 ? 'Complete earlier levels to unlock more!' : '';
         allLevels.forEach(level => {
-            const opt = document.createElement('option');
-            opt.value = level.value;
-            const unlocked = this.unlockedLevels.includes(level.value);
-            opt.textContent = unlocked ? level.label : level.label + ' Locked';
-            opt.disabled = !unlocked;
-            if (level.value === this.gridSize) opt.selected = true;
-            this.levelSelect.appendChild(opt);
+            const btn = document.createElement('button');
+            btn.className = 'level-btn';
+            btn.setAttribute('data-size', level.size);
+            const unlocked = this.unlockedLevels.includes(level.size);
+            btn.innerHTML = unlocked ? level.label + '<br><small>' + level.sub + '</small>' : level.label + ' 🔒<br><small>' + level.sub + '</small>';
+            btn.disabled = !unlocked;
+            btn.addEventListener('click', () => {
+                if (!unlocked) return;
+                this.gridSize = level.size;
+                this.hideLevelSelect();
+                this.newGame();
+            });
+            this.levelButtons.appendChild(btn);
         });
+    }
+
+    showLevelSelect() {
+        this.updateLevelButtons();
+        this.levelSelectOverlay.style.display = 'flex';
+    }
+
+    hideLevelSelect() {
+        this.levelSelectOverlay.style.display = 'none';
+    }
+
+    updateLevelBadge() {
+        const level = this.getLevel();
+        this.currentLevelBadge.textContent = 'Level ' + level + ' (' + this.gridSize + '×' + this.gridSize + ')';
     }
 
     getTarget() {
@@ -109,7 +143,7 @@ class Game2048 {
         this.isPaused = false;
         this.messageContainer.style.display = 'none';
         this.updateLevelInfo();
-        this.updateLevelOptions();
+        this.updateLevelBadge();
         this.renderGrid();
         this.addRandomTile();
         this.addRandomTile();
@@ -380,10 +414,8 @@ class Game2048 {
                     this.messageContainer.style.display = 'none';
                     this.gridSize = 3;
                     this.isPaused = false;
-                    this.suppressSelectChange = true;
-                    this.levelSelect.value = '3';
-                    this.suppressSelectChange = false;
-                    this.newGame();
+                    this.hideLevelSelect();
+                    this.showLevelSelect();
                 });
             } else {
                 nextBtn.textContent = 'Next Level >>';
@@ -393,10 +425,8 @@ class Game2048 {
                 nextBtn.addEventListener('click', () => {
                     this.messageContainer.style.display = 'none';
                     this.isPaused = false;
-                    this.suppressSelectChange = true;
                     this.gridSize = nextSize;
-                    this.levelSelect.value = String(nextSize);
-                    this.suppressSelectChange = false;
+                    this.hideLevelSelect();
                     this.newGame();
                 });
             }
@@ -437,11 +467,9 @@ class Game2048 {
         nextBtn.addEventListener('click', () => {
             this.messageContainer.style.display = 'none';
             this.unlockNextLevel();
-            this.suppressSelectChange = true;
             this.gridSize = nextSize;
-            this.levelSelect.value = String(nextSize);
-            this.suppressSelectChange = false;
             this.isPaused = false;
+            this.hideLevelSelect();
             this.newGame();
         });
 
