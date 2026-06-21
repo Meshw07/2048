@@ -3,7 +3,8 @@ class Game2048 {
         this.gridSize = 4;
         this.score = 0;
         this.bestScore = parseInt(localStorage.getItem('best2048')) || 0;
-        this.unlockedLevels = [3, 4, 5, 6, 7];
+        const savedUnlocked = localStorage.getItem('unlocked2048');
+        this.unlockedLevels = savedUnlocked ? JSON.parse(savedUnlocked) : [3, 4, 5, 6, 7];
         this.grid = [];
         this.isGameOver = false;
         this.isMoving = false;
@@ -80,7 +81,10 @@ class Game2048 {
             touchStartY = null;
         }, { passive: true });
 
-        this.newGame();
+        // Load saved game state if available, otherwise start fresh
+        if (!this.loadState()) {
+            this.newGame();
+        }
     }
 
     updateLevelButtons() {
@@ -160,6 +164,7 @@ class Game2048 {
         this.addRandomTile();
         this.addRandomTile();
         this.updateScore();
+        this.clearState();
     }
 
     renderGrid() {
@@ -211,6 +216,52 @@ class Game2048 {
         el.style.fontSize = this.getFontSize(value) + 'px';
         el.textContent = value;
         return el;
+    }
+
+    saveState() {
+        const state = {
+            grid: this.grid,
+            score: this.score,
+            gridSize: this.gridSize,
+            hasWon: this.hasWon,
+            isGameOver: this.isGameOver,
+            unlockedLevels: this.unlockedLevels
+        };
+        localStorage.setItem('game2048_state', JSON.stringify(state));
+    }
+
+    loadState() {
+        const saved = localStorage.getItem('game2048_state');
+        if (!saved) return false;
+        try {
+            const state = JSON.parse(saved);
+            if (state.grid && state.score !== undefined && state.gridSize) {
+                this.grid = state.grid;
+                this.score = state.score;
+                this.gridSize = state.gridSize;
+                this.hasWon = state.hasWon || false;
+                this.isGameOver = state.isGameOver || false;
+                this.isPaused = false;
+                if (state.unlockedLevels) this.unlockedLevels = state.unlockedLevels;
+                this.messageContainer.style.display = 'none';
+                this.levelSelectOverlay.style.display = 'none';
+                this.updateLevelInfo();
+                this.updateLevelBadge();
+                this.updateScore();
+                this.renderGrid();
+                if (this.isGameOver) {
+                    setTimeout(() => this.showMessage('Game Over!'), 300);
+                }
+                return true;
+            }
+        } catch (e) {
+            // corrupted state, ignore
+        }
+        return false;
+    }
+
+    clearState() {
+        localStorage.removeItem('game2048_state');
     }
 
     getFontSize(value) {
@@ -350,6 +401,7 @@ class Game2048 {
                                     setTimeout(() => this.showMessage('All Levels Completed! You are the Champion!'), 200);
                                 }
                                 this.isMoving = false;
+                                this.saveState();
                                 return;
                             }
                         }
@@ -361,6 +413,7 @@ class Game2048 {
                     setTimeout(() => this.showMessage('Game Over!'), 300);
                 }
                 this.isMoving = false;
+                this.saveState();
             }, 150);
         } else {
             this.isMoving = false;
